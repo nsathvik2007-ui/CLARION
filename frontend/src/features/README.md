@@ -1,38 +1,31 @@
-# frontend/src/features/ — Architecture contract
+# Investigator screen modules
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> DESIGN ONLY — planned files are comments, not functioning application code.
 
-## Responsibility
-Feature-level investigator screens and flow orchestration.
+**Scope:** One folder per end-user workflow, each with its own README and comment-only TSX files.
 
-## Phase ownership
-P4
+## File and folder responsibilities
 
-## Planned files and their exact responsibilities
-
-| File | What must be written during implementation |
+| Folder | Screen |
 |---|---|
-| **leadExplorer.tsx** | TODO: ranked leads, filters, provenance and P1–P4. |
-| **graphExplorer.tsx** | TODO: time-bounded six-node heterograph visualization. |
-| **caseDossier.tsx** | TODO: PDF/CSV export, warnings and redaction. |
+| readiness | schema, capture/label gates |
+| leads | ranked priorities, filters and uncertainty |
+| graph | six-type temporal graph and path tracing |
+| entities | MCER versions, H1–H5 constraints |
+| patterns | peel/mixing-like/layering witness paths |
+| signals | OOF model, Δ and Π evidence |
+| propagation | frozen seed, value/context risk channels and 25-point cap |
+| timeline | separate block vs P2P observed time |
+| cases | authorized local case PDF/CSV/JSON export |
+| models | model cards, temporal holdout, ablations |
+| audit | source/run hashes and review history |
 
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
+## Contracts, dependencies and safeguards
 
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
+One shared typed localhost client, bounded/time-scoped endpoints; no duplicate risk arithmetic in UI.
 
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
+## Exit criteria
 
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
+Functional UI/e2e and accessibility tests after Phase 4 implementation.
 
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
-
----
-
-## Detailed screen design and feature routing (§11)
-
-**leadExplorer.tsx:** readiness mode, P1–P4 queue, score type and uncertainty, filters for risk/ASN/country/pattern/window. **graphExplorer.tsx:** node kinds Transaction/Address/Entity/Host/ASN/Country, chain vs observed-relay edge styling, time slider, MLRP heat overlay and path provenance (Country context-only). **caseDossier.tsx:** itemized Δ/Π, stacked SHAP/meta contributions, separate local/propagation risk, source hashes, redaction and PDF/CSV export.
-
-The final screen map also requires entity-cluster history, peel/mixing/layering timeline, model/ablation comparison, and source quality/abstention diagnostics. Proposed view models and endpoint contracts: [Dashboard design](../../../docs/architecture/investigator-dashboard-architecture.md).
+For system-level dependency direction and migration rationale, consult the [production structure blueprint](../../../docs/architecture/repository-structure.md).

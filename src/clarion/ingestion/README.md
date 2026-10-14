@@ -1,31 +1,27 @@
-# src/clarion/ingestion/ — Architecture contract
+# Ingestion and source adapters
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> DESIGN ONLY — planned files are comments, not functioning application code.
 
-## Responsibility
-Secure CSV/JSON/XML importers; raw immutability, row diagnostics and schema adapters.
+**Scope:** Secure bulk CSV/JSON/XML normalized into source-provenance records.
 
-## Phase ownership
-P1
+## File and folder responsibilities
 
-## Planned files and their exact responsibilities
-
-| File | What must be written during implementation |
+| Location | Planned work |
 |---|---|
-| **__init__.py** | Declare package boundary. |
-| **readers.py** | Stream bounded CSV, JSON and safe XML; DTD/XXE disabled. |
-| **validation.py** | Strict schema checks, amount conversion, quarantined errors. |
-| **adapters.py** | Elliptic++, BitcoinHeist, Bitcoin Core and SIH adapter interfaces. |
+| readers.py | bounded CSV/JSON/XML and XXE refusal |
+| validation.py | integer sats, UTC/time semantics, duplicates, row diagnostics |
+| adapters/__init__.py | source capability and version registry |
+| adapters/sih.py | official SIH-format input |
+| adapters/bitcoin_core.py | authentic local UTXO export, not historical relay IP |
+| adapters/elliptic_pp.py | Elliptic++ transaction/actor feature benchmark |
+| adapters/bitcoinheist.py | address behavior labels with uncertain negatives |
 
-## Data/interfaces
-**Inputs:** Local authorized files and declared input schema.
+## Contracts, dependencies and safeguards
 
-**Outputs:** Versioned normalized records and row-level validation report.
+Source-specific adapters declare absent fields; no synthetic cross-layer joins from benchmark feature graphs.
 
-## Security, testing and acceptance
-Fuzz dangerous XML, oversized arrays, mixed amount formats and duplicates.
+## Exit criteria
 
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
+Exact formats, source rights/hashes, no inferred ownership, malformed-input and unit tests.
 
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+For system-level dependency direction and migration rationale, consult the [production structure blueprint](../../../docs/architecture/repository-structure.md).

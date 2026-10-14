@@ -37,3 +37,7 @@ Do not add executable logic before the assigned phase PR; update this README whe
 Produce SHAP over the **eligible stacking meta-model** when supported, local score contribution bars (stack, Δ, Π, motif and propagation **separate**), MCER evidence history, minimal sufficient chain/wire graph, itemized Π observed-versus-minimum bill, plain-language Δ contradiction, frozen-seed MLRP path, confidence/uncertainty and legitimate alternatives.
 
 Dossier also includes source hashes, cutoff, encoder/model versions, feature availability and abstentions, ASN/country/host attribution as **uncertain context**, chain-only re-score when supported and offline PDF/CSV/JSON exports with role-based redaction and file hashes. See [Dashboard design](../../../docs/architecture/investigator-dashboard-architecture.md).
+
+## Explicit separation: explanation versus reporting
+
+explanations/ decides which claims can be supported by paths, score kinds, Δ/Π/MLRP evidence and caveats. reporting/ is separately responsible for safe authorized PDF/CSV/JSON rendering, escaping, redaction and export manifests; the UI does not construct forensic reports directly. See [reporting blueprint](../reporting/README.md).

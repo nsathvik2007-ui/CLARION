@@ -1,28 +1,25 @@
-# src/clarion/ — Architecture contract
+# CLARION Python backend
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> DESIGN ONLY — planned files are comments, not functioning application code.
 
-## Responsibility
-Python backend package boundary: orchestrated, typed, deterministic, offline.
+**Scope:** Typed modular monolith: one run orchestration layer, independent evidence and ML engines.
 
-## Phase ownership
-P1–P4
+## File and folder responsibilities
 
-## Planned files and their exact responsibilities
+- domain, core: immutable data and source/time/score invariants
+- application: DAG, mode gates, checkpointing, frozen-seed order
+- ingestion/adapters, readiness, chain, wire, storage: traceable evidence
+- graph, features, representation, entity_resolution, patterns: graph and MCER
+- training, detection, divergence, expenditure, fusion, propagation: ML and scores
+- explanations, reporting, api/routers, cli: local case delivery
+- security, observability, synthetic, evaluation: correctness and governance
 
-| File | What must be written during implementation |
-|---|---|
-| **__init__.py** | Define package metadata/version only after the P1 build starts. |
+## Contracts, dependencies and safeguards
 
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
+Domain never depends on infrastructure; algorithm stages cannot import orchestration; source IP relay never proves wallet control.
 
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
+## Exit criteria
 
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
+Phase-wise integrated smoke, temporal leakage, transaction flow and air-gap tests.
 
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
-
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+For system-level dependency direction and migration rationale, consult the [production structure blueprint](../../docs/architecture/repository-structure.md).

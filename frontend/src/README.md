@@ -1,28 +1,24 @@
-# frontend/src/ — Architecture contract
+# Offline TypeScript investigator UI
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> DESIGN ONLY — planned files are comments, not functioning application code.
 
-## Responsibility
-Typed browser source shell, purely architecture stubs.
+**Scope:** React frontend composed from independent screen modules, shared view models and local assets.
 
-## Phase ownership
-P4
+## File and folder responsibilities
 
-## Planned files and their exact responsibilities
+- app: routes, selected run/time and auth context.
+- components: observed/inferred/abstained indicators, score legends.
+- features: vertical folders for readiness, leads, graph, entities, patterns, signals, propagation, timeline, cases, models, audit.
+- lib: local API client and versioned data types.
+- styles: local CSS, accessible print and no CDN.
+- main.tsx: future browser bootstrap (currently comment-only).
 
-| File | What must be written during implementation |
-|---|---|
-| **main.tsx** | TODO: browser bootstrapping and error boundary after approval. |
+## Contracts, dependencies and safeguards
 
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
+UI never reads source captures or fits ML; always preserve time cutoff, source evidence and score type.
 
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
+## Exit criteria
 
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
+Accessible offline browser, bounded graph, correct redactions and role-aware exports.
 
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
-
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+For system-level dependency direction and migration rationale, consult the [production structure blueprint](../../docs/architecture/repository-structure.md).
