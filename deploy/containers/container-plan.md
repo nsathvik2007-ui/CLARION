@@ -1,0 +1,11 @@
+# container-plan.md — planned content
+
+> ARCHITECTURE STUB; not an implemented contract.
+
+**Intended scope:** TODO: rootless read-only volume, no internet dependencies and scan.
+
+**Phase:** P5
+
+**Acceptance:** Require executable tests, provenance and review before marking complete.
+
+Refer to parent README and the architecture specification before implementation.
