@@ -1,30 +1,13 @@
-# docs/security/ — Architecture contract
+# Offline privacy/security threat model and acceptance
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> **Design documentation only.** The original uploaded CLARION v4 PDF supplies blocks 0–12; linked implementation choices and status are proposed and not verified as code. The docs listed below replace earlier TODOs where indicated.
 
-## Responsibility
-Threat model, privacy, supply-chain, evidence custody and offline deployment policy.
+## Detailed contracts
 
-## Phase ownership
-P1–P5
+- [Assets, trust boundaries, threats and threat-led regression tests](threat-model.md)
+- [Privacy and retention plan (separate document: still must be finalized)](privacy-policy.md)
+- [Air-gapped runtime checklist (separate document: still must be finalized)](offline-checklist.md)
 
-## Planned files and their exact responsibilities
+## Key gates
 
-| File | What must be written during implementation |
-|---|---|
-| **threat-model.md** | TODO: trusted boundaries, parser, model artifacts, host exposure and captures. |
-| **privacy-policy.md** | TODO: IP PII handling, dataset access controls, retention and export. |
-| **offline-checklist.md** | TODO: egress, cache, model weights, browser and GeoIP preflight. |
-
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
-
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
-
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
-
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
-
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+Review the [source-to-requirement audit](../architecture/REQUIREMENTS_AUDIT.md) before asserting cross-layer, labeled or economic-cost feasibility. Honest chain-only/unsupervised/abstained outputs remain mandatory whenever sources do not support the proposed model.

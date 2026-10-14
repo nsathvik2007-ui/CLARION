@@ -1,11 +1,33 @@
-# developer-guide.md — planned content
+# Development sequence and architecture controls (planned workflow)
 
-> ARCHITECTURE STUB; not an implemented contract.
+**No application code is asserted working by this document.**
 
-**Intended scope:** TODO: local Python+Node toolchains, pinning and code review.
+## 1. Correct first technical order
 
-**Phase:** P1–P5
+1. Review source PDF, [requirement audit](../architecture/REQUIREMENTS_AUDIT.md), [component contracts](../architecture/component-contracts.md), [schema dictionary](../data/data-dictionary.md) and [TXID join policy](../data/join-policy.md).
+2. Acquire or produce **small legal synthetic** CSV/JSON/XML fixtures with known truth; document timestamp, satoshi, outpoint and event semantics.
+3. Implement strict parsers/schema and test failure/abstention behavior; reserve local read-only raw evidence store and run manifest.
+4. Implement J0 exact on-chain value flow, J1 observed TXID relay joins and J2 context with no owner edges.
+5. Materialize six-type graph, time snapshots, source-to-edge evidence and chain-only baseline; run in Linux without Internet.
+6. Only afterward add graph embeddings, MCER, patterns and actual trained ML under time-respecting folds.
+7. Build Δ and Π only where their independent prerequisites pass; do not assign zeros to missing.
+8. Freeze first-pass seeds, validate bounded MLRP, then implement local API/React UI and case exports.
+9. Run all negative controls and L0–L3 scientific experiments; disclose limits.
 
-**Acceptance:** Require executable tests, provenance and review before marking complete.
+## 2. Phase/PR contract
 
-Refer to parent README and the architecture specification before implementation.
+Every PR identifies block(s) and inputs/outputs affected, typed schema migration, tests actually executed, output artifact hashes, security/privacy impact, unresolved decisions and a rollback. No self-asserted high accuracy, no fake train logs and no executable code in documentation-only PRs.
+
+## 3. Source of truth precedence
+
+1. Uploaded CLARION v4 diagram and user-supplied SIH26146 statement: **requirements**.
+2. 33-section [architecture-v4-spec.md](../architecture/architecture-v4-spec.md): source-preserving implementation expansion.
+3. [REQUIREMENTS_AUDIT](../architecture/REQUIREMENTS_AUDIT.md) and approved ADRs: explicit constraints/resolutions.
+4. Detailed data/ML/security/dashboard docs: design contracts.
+5. README per source folder: module handoff; update if interface decisions change.
+
+If two design docs conflict, open an ADR and fix contracts together, not a silent implementation change.
+
+## 4. Ready for Phase 1?
+
+Only if the chosen test fixture defines field units, real/synthetic TXID semantics, sufficient chain event data, and the exact chain-only fallback. Real network dependence and verified labels need not exist to **begin** Phase 1; they are data gates to be measured and must remain explicitly unknown until inspected.

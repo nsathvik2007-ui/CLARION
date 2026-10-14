@@ -3,7 +3,7 @@
 
 **Project:** Smart India Hackathon 2026 · SIH26146 · NTRO · Blockchain & Cybersecurity  
 **Target:** Linux, fully offline at inference time · **Repository status: architecture and documentation scaffold ONLY**  
-**Current branch of delivery:** Production module plan · **No executable application, training or benchmark is represented as complete.**
+**Current stage:** Architecture gap audit and cross-component contract review. **No executable application, trained model, security test or completed benchmark is represented as working. Critical dataset and calibration decisions remain open.**
 
 ---
 
@@ -277,7 +277,7 @@ Architecture scaffolding occurs in a single documentation-only PR. Subsequent im
 
 | Item | Current status |
 |---|---|
-| SIH architecture and requirement mapping | Documented for review |
+| SIH architecture and requirement mapping | Mapped to PDF 0–12; **critical open decisions remain** |
 | Original CLARION v4 long technical specification | Preserved under docs/architecture |
 | VoiceDoc-inspired high-level README and module layout | Documented design scaffold |
 | Functional code, trained models, installed dashboard | **Not implemented in this repository** |
@@ -295,3 +295,30 @@ Architecture scaffolding occurs in a single documentation-only PR. Subsequent im
 ---
 
 **CLARION — Evidence first. Graph intelligence second. Investigative judgment always.**
+
+
+## 23. Architecture completeness review — critical gaps and traceability
+
+**Architecture review finding (October 2026):** earlier linked detailed design files for schema, cross-layer joins, temporal MCER, experiments, component contracts and security were TODO placeholders. They have now been replaced with proposed technical designs, **not implemented code**. They must be reviewed together against the original [CLARION v4 source specification](docs/architecture/architecture-v4-spec.md).
+
+| Design area | Detailed review document | What must be decided before implementation can depend on it |
+|---|---|---|
+| Source block-by-block audit (§0–§12) | [Requirement audit and unresolved decisions](docs/architecture/REQUIREMENTS_AUDIT.md) | D01–D12; evidence-backed design gates rather than assumed feasibility |
+| Integrated architecture | [Execution modes and failure paths](docs/architecture/architecture-overview.md) | Data plane, chain-only/unsupervised/Δ/Π gating and end-to-end dependency flow |
+| Cross-module typing | [Component input/output contracts](docs/architecture/component-contracts.md) | Envelope, schema version, evidence IDs, confidence kinds and abstention states |
+| Dataset schema and Bitcoin fidelity | [Canonical data dictionary](docs/data/data-dictionary.md) | Raw SIH arrays to transactions/outpoints/wire observations; satoshis, timestamps, scripts |
+| Real and synthetic sources | [Dataset acquisition](docs/data/dataset-acquisition.md) | Separate Elliptic/BitcoinHeist/Bitcoin Core vs synthetic vs organizer dataset evaluation |
+| Cross-layer feasibility | [TXID joins and dependence policy](docs/data/join-policy.md) | Does available data *actually contain* decoded observed TXIDs and independently useful wire signals? |
+| Temporal clustering | [H1–H5 MCER design](docs/ml/mcer-plan.md) | Confidence, uncertain wire conflicts, false-merge target, fixed-point stop and lineage |
+| Graph/model architecture | [Model selection and shared embeddings](docs/ml/model-selection.md) | CPU/hetero GNN baseline, cutoff, costs and incremental utility |
+| Experimental validity | [Full experiment plan](docs/ml/experiment-plan.md) | Time-split OOF, generator shift, legitimate FP controls, ablations and confidence |
+| Stack scoring | [Stacked anomaly architecture](docs/architecture/stacking-architecture.md) | Mode/calibration, OOF meta, learned vs unsupervised outputs and no MLRP feedback |
+| Fusion and propagation | [MLRP scoring](docs/architecture/risk-propagation-architecture.md) | Frozen seeds, financial vs network-context channels, ≤6 hops, at most 25 points |
+| Investigator product | [Dashboard/API/dossiers](docs/architecture/investigator-dashboard-architecture.md) | Roles, source-linked views, filters, report hashes, no invented ownership |
+| Threat model and release | [Security threats](docs/security/threat-model.md) · [Definition of done](docs/development/definition-of-done.md) | Authorised offline Linux operation, attack tests and actual acceptance logs |
+
+**Do not confuse diagrams and stubs with functioning ML.** The most critical unvalidated premises are real sensor TXID linkage, meaningful independent chain–wire dependence, trustworthy labels at the selected prediction level, and the controlled economic goal required for Π. The correct implementation plan must **abstain or fall back** when these premises fail; no code should fabricate missing evidence.
+
+**Phase 1 is deliberately a feasibility-gate phase:** implement and run strict input/adapters, canonical contracts and a verifiable chain-only baseline **before** asserting that the complete cross-layer research architecture works. The detailed audit distinguishes PDF-specified parts from conservative engineering design decisions.
+
+---
