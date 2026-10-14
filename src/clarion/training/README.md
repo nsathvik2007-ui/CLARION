@@ -30,3 +30,11 @@ For all modules: preserve provenance, causal availability, explicit uncertainty/
 
 ## Implementation handoff
 Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+
+---
+
+## OOF stack and model evolution contract
+
+Training steps: dataset/label audit → predeclared chronological folds → fold-specific features/embeddings/MCER → train base learners on past → predict the next fold → store OOF scores + valid motif/Δ/Π components → meta-learner LR/optional LightGBM → independent calibration/holdout → model card → offline registry/promotion.
+
+Track original score type, input schema, available_at, source hashes, feature-selection process, split boundaries, seeds and environment. Unsupervised/no-label fallback ranks novelty, not crime probability. Separate pass-2 propagation training using independently generated fold-local frozen seeds; never feed training-instance propagation into its own pass-1 label. See [architecture design](../../../docs/architecture/stacking-architecture.md).

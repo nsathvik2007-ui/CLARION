@@ -129,27 +129,79 @@ Six node types: **Transaction · Address · Entity · Host · ASN · Country**. 
 
 Track peel-chain candidate, mixing-like fan-in/out, CoinJoin-like structure, circular paths, rapid multi-hop layering, changing output fragmentation, bursts, fee/weight anomalies and interactions with locally documented service categories. Require supporting subgraphs **and legitimate alternative interpretations**; nothing is proof of laundering.
 
-## 10. Stacked anomaly detector and lifecycle
+## 10. Stacked anomaly detector, meta-model and lifecycle (§6)
 
-**Baselines:** logistic regression, random forest, isolation forest, One-Class SVM and GMM. **Upgrades:** optional LightGBM, GraphSAGE/GAT classification or novelty heads and temporal GNN research. **Stack:** expanding chronological out-of-fold base predictions → regularized meta-learner → separate later calibration → untouched temporal test.
+**What enters the stack:** as-of chain features, eligible wire features, temporal graph embeddings, MCER candidate context, §5 motif scores, valid Δ components, valid Π bills and source-coverage masks. **What exits:** named base-model scores, a leakage-safe meta-model anomaly/novelty result, calibration status, uncertainty and feature-level explanation.
 
-No label → ensemble of novelty ranks, **not** crime probabilities. No random leakage across future graph edges/MCER state; keep experiments under [experiments/](experiments/README.md), model recipes under [configs/models/](configs/models/README.md), training under [src/clarion/training/](src/clarion/training/README.md).
+~~~mermaid
+flowchart LR
+  A["Chain + wire (if valid) + graph features"] --> B["Four base families"]
+  B --> C["Rules · LR/RF/LightGBM · IF/OCSVM/GMM · GNN heads"]
+  C --> D["Time-respecting out-of-fold predictions"]
+  D --> E["Meta-features: base predictions + motifs + eligible Δ and Π"]
+  E --> F["Regularized LR meta-model / optional LightGBM"]
+  F --> G["Later independent calibration and holdout"]
+  G --> H["PASS 1 local anomaly/risk; freeze seeds"]
+~~~
 
-## 11. Cross-layer Δ and obfuscation Π
+The uploaded diagram specifies four base families and OOF stacking. **Graph propagation cannot be a pass-1 input**, because it uses pass-1 risk as its own seed; propagation is included only in **pass-2 fusion**, capped at 25 of 100. This explicitly resolves the otherwise circular dependency.
 
-**Δ divergence:** eligible paired chain/wire views → CCA baseline → residual score + Δ1–Δ5 explanations → quality gate and abstention when wire evidence is weak.
+**Supervised:** LR, RF, optional LightGBM, and GraphSAGE/GAT or temporal GNN heads where trustworthy labels exist. **Unsupervised fallback:** Isolation Forest, One-Class SVM, Gaussian Mixture and graph novelty; output **novelty rankings**, not fake criminal probabilities. **Meta-training:** expanding chronological folds, fold-local preprocessing/embeddings/MCER, independent calibration and untouched future holdout. Conformal intervals/p-values appear **only if validly calibrated and empirically evaluated**.
 
-**Π expenditure:** independently identified economic outcome and admissible cheapest execution → itemized fee, hop, time, fragmentation and infrastructure premiums; retain original units and signed values; abstain when goal or fee context is not defensible.
+**Full model selection, formulas, OOF training, artifact contracts, negative controls and tests:** [Stacking architecture](docs/architecture/stacking-architecture.md), [detection module](src/clarion/detection/README.md), [training module](src/clarion/training/README.md).
 
-**Fusion:** no raw Δ + Π sum. Calibrate only supported features; use separate Π–Δ typology when both axes valid. Freeze first-pass risk seeds, diffuse risk causally, then cap propagation contribution at **25 of 100** points.
+## 11. Cross-layer Δ, obfuscation Π and two-pass fusion (§7–§9)
 
-## 12. Multi-level risk propagation
+**Δ divergence:** use only trustworthy joined chain/wire views; CCA residual baseline → Δ1 Sybil-collapse, Δ2 identity-spray, Δ3 machine-rhythm, Δ4 route-inconsistency and Δ5 infrastructure-reuse **candidate explanations**. Poor TXID joins, dependence or sensor timing → **ABSTAIN**.
 
-Value-weighted and hop/time-decayed diffusion with a hard six-hop target; forward taint and backward provenance are separately displayed. Known service boundaries absorb, high-degree hosts and ASNs do not broadcast blanket contamination, Country is context-only. Every result must show a traceable contributing path from frozen seed evidence.
+**Π expenditure:** verified controlled-set economic goal and minimum-cost alternative → itemized **Π_fee** (sats), **Π_hop** (counts), **Π_time** (duration), **Π_frag** (outputs/addresses) and **Π_infra** (supported infrastructure context). Unknown goal/payees/fee environment → **ABSTAIN**. High Π measures paid privacy/complexity, **not crime**.
 
-## 13. Investigator dashboard and export
+~~~text
+Stack score + motif support + valid Δ/Π -> PASS 1 provisional local risk
+                                     -> FREEZE seed risk
+                                     -> §10 bounded MLRP exposure
+                                     -> PASS 2 final risk (propagation <=25/100)
+                                     -> Priority P1–P4 + full evidence paths
+~~~
 
-Local-only FastAPI plus React/TypeScript: dataset readiness, ranked lead queue, time-bounded multi-layer graph, candidate clusters, pattern timelines, Δ/Π panel, MLRP path explanation, what-if chain-only comparison, model confidence and evidence dossier export. Build UI with offline assets, paginated nodes and filters; never display unsupported ownership claims.
+The Π–Δ typology is a **two-axis explanation**, never raw Π + Δ arithmetic. Separate source reliability, uncertainty, and calibrated vs uncalibrated score types. See [risk/fusion contract](docs/architecture/risk-propagation-architecture.md) and [fusion module](src/clarion/fusion/README.md).
+
+## 12. Multi-Level Risk Propagation (MLRP) and propagation score (§10)
+
+This is a **risk/exposure propagation** score, not a reward. The uploaded design uses frozen first-pass seeds, typed edge conductance, monetary value-share and time decay with a hard **six-hop scoring horizon**.
+
+~~~text
+r_i(k+1) = (1-α) · s_i  +  α · Σ(j→i)[ w(edge_ji) · φ(value_share_ji) · τ(time_gap_ji) · r_j(k) ]
+~~~
+
+**Levels:** Address (tainted depth/value inflow), Transaction (value-weighted exposure), Entity (candidate membership aggregation + own Δ/Π), Host/IP (confidence-weighted *observed relay* context), ASN (host-normalized prevalence), **Country (context only; never scored)**. Each scored level uses a separately defined scale.
+
+**Diagram's initial edge weights:** spends/funds **1.0**, observed-broadcast **0.6 × evidence confidence**, co-session **0.3**, candidate member-of **0.8**, hosted-in **0.1**. These are *design hypotheses*, not verified probabilities. To prevent wallet/IP misattribution, maintain separate value-flow and network-context evidence channels.
+
+**Anti-contamination:** value-conserving outgoing shares; temporal/hop decay; no causal backtracking; absorbing exchanges/custodians/CoinJoin services; infrastructure never re-emits risk to other customers. Distinguish forward taint from backward provenance. Deterministic contributing paths take precedence in case dossiers over learned GAT attention.
+
+**Final score:** MLRP is **at most 25 of the 100 risk points**, applied **once after** the frozen pass-1 score. The exact normalization/calibration and P1–P4 thresholds are Phase 4 implementation decisions. No labels → prioritize as a rank, not as an illicit-probability estimate.
+
+**Full equation, edge-type policy, algorithm stages, scoring budget, output contract and tests:** [MLRP architecture](docs/architecture/risk-propagation-architecture.md), [propagation module](src/clarion/propagation/README.md).
+
+## 13. Investigator dashboard, explanations and case dossiers (§11)
+
+Build a **fully offline, investigator-focused console** using local FastAPI, React/TypeScript and a time-bounded graph visualizer. The uploaded diagram requires:
+
+| Screen/panel | Required interactive information |
+|---|---|
+| **Readiness** | schema, data source/capture coverage, TXID/time alignment, labels and chain-only/cross-layer mode |
+| **Ranked leads** | final priority **P1–P4**, local stack score, propagation contribution, confidence status, pattern evidence |
+| **Graph explorer** | six typed nodes, chain/wire edge toggles, dated snapshots, risk heat overlay, multi-hop path tracing |
+| **Entity and patterns** | MCER candidate clusters, false-merge cautions, peel-chain/mixing/layering witness paths |
+| **Stack + Δ + Π** | SHAP/meta-feature explanation if supported; per-signal bars, five Δ explanations, itemized Π bill and abstention |
+| **Propagation** | Address/Transaction/Entity/Host/ASN level selector, forward/backward channels, seed IDs, value share, path and boundaries |
+| **Time and counterfactual** | chain and relay event timeline; re-score with wire removed when comparable to show incremental cross-layer evidence |
+| **Dossier/export** | minimal sufficient graph, plain-language rationale, attribution context (uncertain), model/source IDs, audit and local PDF/CSV |
+
+**Never label a relayed TXID as proof of IP/wallet ownership.** Country provides context only, not a risk score. Show missing evidence as **ABSTAIN**, not zero; distinguish novelty scores from calibrated probabilities. Paginate large graphs and load all fonts/icons/assets locally.
+
+**Screen wireframe, UI data objects, proposed local API routes, export fields, access controls and end-to-end tests:** [Dashboard architecture](docs/architecture/investigator-dashboard-architecture.md), [frontend feature module](frontend/src/features/README.md), [API module](src/clarion/api/README.md), [explanations module](src/clarion/explanations/README.md).
 
 ## 14. Privacy, security and forensic integrity
 
