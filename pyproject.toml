@@ -1,0 +1,5 @@
+# DESIGN STUB ONLY - NOT A VALID/INSTALLABLE PACKAGE YET.
+# P1.1: add project metadata, Python>=3.11, pinned runtime/dev extras and entry points.
+# P1.1: add Ruff, mypy, pytest, build and local reproducibility constraints.
+# P2/P3: introduce optional PyTorch/PyG/LightGBM extras only after matrix tests.
+# P5: verify wheel-building and wholly offline dependency mirror.
