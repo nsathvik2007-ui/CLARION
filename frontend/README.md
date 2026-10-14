@@ -27,3 +27,11 @@ For all modules: preserve provenance, causal availability, explicit uncertainty/
 
 ## Implementation handoff
 Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+
+---
+
+## §11 target product screens (not yet implemented)
+
+Investigator workspace: readiness → ranked leads → selected entity/transaction → typed graph + time selector → stack/Δ/Π/motif breakdown → forward/backward MLRP exposure path → audit and export. Add per-run model/evaluation view. Every chart must expose its event-time cutoff and provenance.
+
+**UI stack:** React/TypeScript, Cytoscape.js or equivalent fully bundled local graph visualization, responsive keyboard-accessible layouts, no external CDN/fonts/telemetry. Frontend is driven only by versioned local FastAPI contracts with pagination/authorization. See [Dashboard design](../docs/architecture/investigator-dashboard-architecture.md).

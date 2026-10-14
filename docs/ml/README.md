@@ -28,3 +28,9 @@ For all modules: preserve provenance, causal availability, explicit uncertainty/
 
 ## Implementation handoff
 Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+
+---
+
+## Missing architecture details now cross-referenced
+
+Use [§6 OOF stacking architecture](../architecture/stacking-architecture.md) to define chronological folds, base learner families, meta-score training, calibration, synthetic/real holdouts and model evolution. Use [§9/§10 propagation architecture](../architecture/risk-propagation-architecture.md) for safe two-pass fusion and cap. Use [§11 dashboard architecture](../architecture/investigator-dashboard-architecture.md) to guarantee that every model output is explainable and inspectable, including abstentions, uncertainty and legitimate alternatives. These are design contracts, not completed experiments.

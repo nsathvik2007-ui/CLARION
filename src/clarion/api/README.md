@@ -30,3 +30,11 @@ For all modules: preserve provenance, causal availability, explicit uncertainty/
 
 ## Implementation handoff
 Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+
+---
+
+## Investigator API contracts (§11)
+
+Local-only, typed FastAPI endpoints (tentative route names): runs/readiness, paginated leads, bounded graph neighborhood and risk path, MCER versions, motif and Δ/Π signal detail, model versions/metrics and authorized dossier export. Each response must carry run_id, cutoff_time, evidence IDs, source/score type, confidence/abstentions, provenance and redaction state.
+
+**Security:** bind localhost by default; role authorization before any remote access; enforce maximum graph nodes/hops, path sanitization, request sizes, immutable run artifacts, XSS-safe presentation, protected PDF/CSV export. Never assert wallet ownership from a TXID relay. Proposed routes and view models: [Dashboard design](../../../docs/architecture/investigator-dashboard-architecture.md).

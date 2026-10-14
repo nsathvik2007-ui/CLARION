@@ -29,3 +29,11 @@ For all modules: preserve provenance, causal availability, explicit uncertainty/
 
 ## Implementation handoff
 Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+
+---
+
+## Explanation and dossier output contract (§11)
+
+Produce SHAP over the **eligible stacking meta-model** when supported, local score contribution bars (stack, Δ, Π, motif and propagation **separate**), MCER evidence history, minimal sufficient chain/wire graph, itemized Π observed-versus-minimum bill, plain-language Δ contradiction, frozen-seed MLRP path, confidence/uncertainty and legitimate alternatives.
+
+Dossier also includes source hashes, cutoff, encoder/model versions, feature availability and abstentions, ASN/country/host attribution as **uncertain context**, chain-only re-score when supported and offline PDF/CSV/JSON exports with role-based redaction and file hashes. See [Dashboard design](../../../docs/architecture/investigator-dashboard-architecture.md).
