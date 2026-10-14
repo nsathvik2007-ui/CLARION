@@ -139,6 +139,8 @@ The uploaded §10D proposes a GAT-based learned attention alternative to hand-ch
 | src/clarion/fusion/local.py | independently generated seed table |
 | src/clarion/fusion/final.py | apply capped post-propagation adjustment once |
 | src/clarion/explanations/dossiers.py | persist definitive deterministic evidence paths |
-| frontend/src/features/graphExplorer.tsx | display level-aware risk heat overlay and selected causal path |
+| frontend/src/features/graph/GraphPage.tsx | display level-aware risk heat overlay and selected causal path |
 
 **Source:** uploaded CLARION v4 diagram, boxes 9, 10A–10D, 11. Risk normalization, channel separation and proposed score budgeting are engineering safeguards subject to tests, not measured results.
+
+**Implementation folder map:** [production module structure](repository-structure.md). The path explorer is planned under frontend/src/features/graph/; these files are not yet executable.

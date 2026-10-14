@@ -207,28 +207,37 @@ Build a **fully offline, investigator-focused console** using local FastAPI, Rea
 
 Threat model covers malicious CSV/JSON/XML, XXE/billion-laughs, CSV formula injection, unsafe model deserialization, raw capture exposure, poisoned labels and weights, future leakage, unauthorized case export, supply-chain tampering and runtime network egress. Use immutable raw files with SHA-256, role-limited case access, redaction, input ceilings, safe model formats and tamper-evident audit logs. See [Security](docs/security/README.md).
 
-## 15. Proposed production repository structure
+## 15. Production-oriented repository structure
 
-Every currently planned folder is materialized on the architecture branch with its own **README.md** documenting purpose, files, contracts, security constraints and acceptance. **Non-README file stubs contain comments only**; they are implementation instructions, not runnable application code.
+CLARION is a **modular offline Linux application**, with clear domain/data, graph/ML, investigative, export and security boundaries. The previous generic folders have been audited and supplemented with a **typed domain layer**, a **single application orchestrator**, source-specific adapters, per-feature API routes and dashboard screens, safe reporting and dedicated contract/property/performance tests.
 
 ~~~text
 CLARION/
-├── README.md                         # product overview; this document
-├── docs/                             # specification, ADRs, progress, security, ML
-├── schemas/                          # versioned raw/normalized/graph/API contracts
-├── configs/                          # offline profiles, model/security recipes
-├── src/clarion/                      # ingestion → graph → learning → fusion → API
-├── frontend/src/                     # app, components, screens, API client, styles
-├── data/                             # small safe samples, manifests, external mount
-├── artifacts/                        # local models/reports (not in Git)
-├── tests/                            # unit, integration, leakage, adversarial, offline, E2E
-├── experiments/                      # reproducible benchmark and ablation protocols
-├── scripts/                          # pre-offline data/training/release helpers
-├── deploy/                           # Linux workstation and optional container plans
-└── .github/                          # PR templates and future CI descriptions
+├── src/clarion/
+│   ├── domain/ core/ application/                 # types, core, orchestration
+│   ├── ingestion/adapters/ readiness/ chain/ wire/ storage/
+│   ├── graph/ features/ representation/ entity_resolution/ patterns/
+│   ├── training/ detection/ divergence/ expenditure/ fusion/ propagation/
+│   ├── explanations/ reporting/ evaluation/ synthetic/ security/ observability/
+│   ├── api/routers/ cli/
+├── frontend/src/
+│   ├── app/ components/ lib/ styles/
+│   └── features/                                 # readiness, leads, graph,
+│       ├── entities/ patterns/ signals/ propagation/ timeline/
+│       └── cases/ models/ audit/
+├── schemas/ configs/ data/ artifacts/
+├── tests/                                       # unit, contracts, integration,
+│                                               # property, leakage, adversarial,
+│                                               # offline, e2e, performance, fixtures
+├── docs/                                        # architecture, data, ml,
+│                                               # security, operations, progress
+├── experiments/ scripts/ deploy/ .github/
+└── README.md
 ~~~
 
-Review the **per-folder README** before implementing any module. The previous 33-section technical specification is preserved unmodified in [docs/architecture/architecture-v4-spec.md](docs/architecture/architecture-v4-spec.md).
+**Full file-by-file repository ownership, module dependency rules, run flow and exact migration:** [Production structure blueprint](docs/architecture/repository-structure.md). Every standard module folder has a local README describing planned interfaces and tests; `.github/` uses `ARCHITECTURE.md` so the main GitHub homepage README remains visible.
+
+**Source-of-truth separation:** [the original full architecture](docs/architecture/architecture-v4-spec.md), [stacking](docs/architecture/stacking-architecture.md), [risk propagation](docs/architecture/risk-propagation-architecture.md) and [investigator dashboard](docs/architecture/investigator-dashboard-architecture.md) remain intact. All program files are comment-only design stubs; no trained model or functional application is implied.
 
 ## 16. Planned core public contracts
 

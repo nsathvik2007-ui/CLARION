@@ -1,28 +1,28 @@
-# tests/ — Architecture contract
+# Complete verification layout
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> DESIGN ONLY — planned files are comments, not functioning application code.
 
-## Responsibility
-Test architecture and negative controls; stubs are comments only, not passing tests.
+**Scope:** Source/ML/security/testing controls aligned with architecture blocks 0–12.
 
-## Phase ownership
-P1–P5
+## File and folder responsibilities
 
-## Planned files and their exact responsibilities
+- unit: parser and local math tests.
+- contracts: domain schema/API compatibility.
+- integration: deterministic full chain-only and validated-wire pipelines.
+- property: graph conservation, no time travel or fan-out amplification.
+- leakage: temporal OOF and per-fold graph/MCER feature cutoffs.
+- adversarial: XXE/CSV/model poisoning, false wallet ownership.
+- offline: air-gapped operation.
+- e2e: local case UI and report export.
+- performance: measured RAM, p50/p95 and throughput.
+- fixtures: sealed synthetic truths and benign service controls.
 
-| File | What must be written during implementation |
-|---|---|
-| **conftest.py** | Plan controlled fixture factories and time-based test setup. |
+## Contracts, dependencies and safeguards
 
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
+Tests are comment-only blueprints today. Performance and incident accuracy must never be asserted without real measured runs.
 
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
+## Exit criteria
 
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
+Every phase needs real executable tests, CI evidence and failure disclosure.
 
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
-
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
+For system-level dependency direction and migration rationale, consult the [production structure blueprint](../docs/architecture/repository-structure.md).

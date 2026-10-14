@@ -115,9 +115,9 @@ If the only basis for a claim is a model attention weight or a network relay, ex
 |---|---|
 | frontend/src/app/App.tsx | root navigation, authorization context, global run/time mode |
 | frontend/src/app/routes.tsx | readiness, leads, graph, entity, signals, cases and models route map |
-| frontend/src/features/leadExplorer.tsx | paginated lead queue, risk bands and clear score types |
-| frontend/src/features/graphExplorer.tsx | Cytoscape.js temporal six-type graph, risk overlay, path tracing |
-| frontend/src/features/caseDossier.tsx | evidence summaries and local case export |
+| frontend/src/features/leads/LeadsPage.tsx | paginated lead queue, risk bands and clear score types |
+| frontend/src/features/graph/GraphPage.tsx | Cytoscape.js temporal six-type graph, risk overlay, path tracing |
+| frontend/src/features/cases/CaseDossier.tsx | evidence summaries and local case export |
 | frontend/src/components/EvidenceChip.tsx | observed vs inferred vs abstained evidence indicators |
 | frontend/src/components/RiskScale.tsx | local/final score and propagation ≤25 distinction |
 | frontend/src/lib/types.ts | view models and versioned OpenAPI-derived types |
@@ -151,3 +151,5 @@ If the only basis for a claim is a model attention weight or a network relay, ex
 - [ ] All reported accuracy belongs to a named dataset, split and model version.
 
 **Source:** uploaded CLARION v4 architecture, §11 and §12, with dependency on §4–§10. Screens, endpoint names, data types and UI layout are implementation proposals.
+
+**Implementation folder map:** [production module structure](repository-structure.md) and the per-screen READMEs under frontend/src/features. UI routes are planned; no screens are implemented yet.

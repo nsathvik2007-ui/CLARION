@@ -15,3 +15,7 @@
 ## Key gates
 
 Review the [source-to-requirement audit](REQUIREMENTS_AUDIT.md) before asserting cross-layer, labeled or economic-cost feasibility. Honest chain-only/unsupervised/abstained outputs remain mandatory whenever sources do not support the proposed model.
+
+## Verified production-oriented folder architecture
+
+[Repository structure and module dependencies](repository-structure.md) is the location map for implementation. All existing full technical, stacking, MLRP and dashboard specifications remain authoritative; this document only governs module boundaries and ownership.
