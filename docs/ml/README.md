@@ -1,36 +1,15 @@
-# docs/ml/ — Architecture contract
+# Graph-ML, temporal entity clustering, stacking and experiment selection
 
-> **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
+> **Design documentation only.** The original uploaded CLARION v4 PDF supplies blocks 0–12; linked implementation choices and status are proposed and not verified as code. The docs listed below replace earlier TODOs where indicated.
 
-## Responsibility
-Training recipes, temporal splits, MLP/Mcer research and evaluation plans.
+## Detailed contracts
 
-## Phase ownership
-P2/P3/P5
+- [H1–H5 MCER signed constraint, temporal lineage and false-merge tests](mcer-plan.md)
+- [Shared graph representation and model-selection rubric](model-selection.md)
+- [L0–L3, OOF, honest holdouts, per-service false positives and ablations](experiment-plan.md)
+- [Source-derived §6 model stack architecture](../architecture/stacking-architecture.md)
+- [Source-derived §9/§10 diffusion/fusion plan](../architecture/risk-propagation-architecture.md)
 
-## Planned files and their exact responsibilities
+## Key gates
 
-| File | What must be written during implementation |
-|---|---|
-| **model-selection.md** | TODO: classic baselines vs GNN cost/performance studies. |
-| **experiment-plan.md** | TODO: temporal OOF, drift, negative controls, calibration and ablations. |
-| **mcer-plan.md** | TODO: iteration stopping, false-merge tests, lineage and wire caveats. |
-
-## Data/interfaces
-**Inputs:** See parent modules and the architecture specification.
-
-**Outputs:** Versioned artifacts or typed interfaces; no implementation exists yet.
-
-## Security, testing and acceptance
-Require executable tests, provenance and review before marking complete.
-
-For all modules: preserve provenance, causal availability, explicit uncertainty/abstention, offline operation, real tests and realistic false-positive controls. Record status in docs/progress before claiming completion.
-
-## Implementation handoff
-Do not add executable logic before the assigned phase PR; update this README when actual public interfaces, dependencies and tests are verified.
-
----
-
-## Missing architecture details now cross-referenced
-
-Use [§6 OOF stacking architecture](../architecture/stacking-architecture.md) to define chronological folds, base learner families, meta-score training, calibration, synthetic/real holdouts and model evolution. Use [§9/§10 propagation architecture](../architecture/risk-propagation-architecture.md) for safe two-pass fusion and cap. Use [§11 dashboard architecture](../architecture/investigator-dashboard-architecture.md) to guarantee that every model output is explainable and inspectable, including abstentions, uncertainty and legitimate alternatives. These are design contracts, not completed experiments.
+Review the [source-to-requirement audit](../architecture/REQUIREMENTS_AUDIT.md) before asserting cross-layer, labeled or economic-cost feasibility. Honest chain-only/unsupervised/abstained outputs remain mandatory whenever sources do not support the proposed model.
