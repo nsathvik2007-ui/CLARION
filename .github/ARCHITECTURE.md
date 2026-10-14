@@ -1,4 +1,4 @@
-# .github/ — Architecture contract
+# .github/ — Architecture contract (GitHub automation)
 
 > **Documentation-only scaffold.** No module functionality is implemented. Follow the original v4 specification and root README; file stubs are comments describing future work.
 
