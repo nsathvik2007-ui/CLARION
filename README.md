@@ -657,4 +657,426 @@ The project is complete **only** when these are demonstrated using an installabl
 | Synthetic performance can be overstated | L0–L3 controls, generator shift tests and honest external validity | Phase 5 |
 | Fully offline dependency packaging can fail | disconnected Linux install/inference acceptance test | Phase 5 |
 
-**Current project state:** Architecture and five-phase work plan defined in this README. **All implementation and validation checkboxes remain open.** The next action is to review this specification, then start **P1.1** on a separate implementation branch.
+
+---
+
+## 23. Engineering architecture v4.1 — detailed block-by-block plan (DESIGN ONLY)
+
+This section translates the uploaded CLARION v4 diagram into a **build contract** for data, learning, interfaces, scale, security, and application behavior. Sections 0–12 and their named components are **source-derived requirements**. Concrete data tables, model choices, heuristics, thresholds, library selections and interfaces below are **proposed engineering decisions**, to be validated by their own acceptance tests. Do not represent them as model results or as statements supplied by the SIH organization.
+
+### 23.1 Full operating mode and orchestration
+
+~~~mermaid
+flowchart TB
+    SOURCES["Evidence inputs: raw chain + wire + optional truth / GeoIP"] --> IN["0. File ingest, typed normalize, raw SHA-256 manifest"]
+    IN --> QC{"TXID/time/coverage/dependence quality gate"}
+    QC -->|valid wire evidence| JOINT["1A + 1B: joint chain and observed wire views"]
+    QC -->|no trustworthy wire| CHAIN["1A: chain-only view; Δ and wire Π abstain"]
+    JOINT --> GRAPH["2. Typed temporal evidence graph"]
+    CHAIN --> GRAPH
+    GRAPH --> FEAT["3. Fold-causal feature views and representations"]
+    FEAT --> CLUST["4. MCER temporal candidate entities"]
+    CLUST --> GRAPH
+    FEAT --> MOTIF["5. Patterns / motif confidence"]
+    FEAT --> DETECT["6. Classic, unsupervised, graph ML + OOF stack"]
+    FEAT --> DELTA["7. Δ evidence, only if paired views valid"]
+    FEAT --> PI["8. Π costs, only if economic objectives valid"]
+    MOTIF --> FUSE1["9. Local first-pass fusion"]
+    DETECT --> FUSE1
+    DELTA --> FUSE1
+    PI --> FUSE1
+    FUSE1 --> SEED["Frozen, hashed seed table"]
+    SEED --> PROP["10. Causal bounded MLRP"]
+    PROP --> FUSE2["9. Capped non-circular second-pass fusion"]
+    FUSE1 --> FUSE2
+    FUSE2 --> UI["11. Offline investigator console & dossier"]
+    UI --> EVAL["12. Research evaluation, review and ablations"]
+~~~
+
+**Operational profiles:**
+1. **CHAIN_ONLY:** transaction graph, features, motif, MCER and anomaly baselines. Wire-dependent Δ unavailable; Π components gated independently.
+2. **CROSS_LAYER_VALIDATED:** valid observed joins and dependence test permit paired evidence and trained cross-layer features, not attribution.
+3. **UNSUPERVISED_ONLY:** independent of the chain/wire decision; return novelty ranks instead of calibrated suspiciousness probabilities.
+4. **RESEARCH_SYNTHETIC:** use generated truth for tests and model experiments; mark all sample predictions as synthetic.
+5. **DEGRADED:** when missing on-chain outpoints, fee context, GeoIP/ASN, observed TXIDs or calibrated labels, keep other compatible modules running and record abstentions.
+
+### 23.2 Explicit block contracts
+
+| Block | Required inputs | Internal components and algorithms | Versioned output | Reject / fallback criteria |
+|---|---|---|---|---|
+| 0 readiness | raw files, source manifest | schema, exact amount parser, event-time semantics, dedupe, clock budget, TXID coverage, permutation/null test, label audit | normalized parquet, quality report, routing flags | malformed -> quarantine; weak joins -> chain-only |
+| 1A chain | transactions, inputs/outputs, outpoints where available | UTXO resolution, satoshi conservation, script/vsize enrichment, change hypotheses, rolling fees | chain event tables + directed value edges | outpoint missing -> approximate amount tracing |
+| 1B wire | source/destination IP/port, capture time, observed TXID | TCP/session events, deduplication, local GeoIP/ASN, IP family and prefix, timing entropy | wire sessions, host events, provenance | no exact observed TXID -> no cross-layer ownership edge |
+| 2 evidence graph | validated chain and wire tables | six-node heterograph, evidence edge registry, temporal snapshots, uncertainty masks | graph snapshots, node IDs, typed edge IDs | unknown relationship -> no edge |
+| 3 features/embeddings | graph snapshots, per-fold cutoff | deterministic features, random walk, GraphSAGE, GAT, temporal hetero encoder | address/transaction/entity embeddings + feature registry | unavailable wire -> masked chain-only representation |
+| 4 MCER | proposed co-spend/change/embedding/wire candidates | signed constraints, conservative merge/split, fixed-point iterations, partition lineage | candidate entities, before/after scores, edge rationale | ambiguous candidates -> leave unmerged |
+| 5 motifs | graph and flow/time features | peel, rapid layering, fan-in/out, circles, CoinJoin-like candidate, learned motif novelty | pattern instances and subgraph proofs | legitimate alternative -> confidence penalty/review |
+| 6 stack | eligible features/labels, representation artifacts | LR/RF/LightGBM, IF/OCSVM/GMM, GNN heads, temporal OOF meta-learning | scores, calibration, OOF manifest, model card | no reliable labels -> unsupervised ranking only |
+| 7 Δ | high-quality paired chain/wire views | train-only CCA, held-out residuals, scenario-specific components Δ1–Δ5 | residual and component explanations | weak pairs -> explicit abstention |
+| 8 Π | confirmed economic goal, fee/time/UTXO constraints | counterfactual minimum-cost baseline; fee/hop/time/fragment/infrastructure ledgers | itemized signed bill and evidence | unknown goal -> per-component/full abstention |
+| 9 fuse | eligible anomaly/motif/Δ/Π, later MLRP | feature gating, individual calibration, two-pass P1–P4, typology | provisional/final lead table, contribution summary | invalid calibration -> rank not probability |
+| 10 MLRP | immutable pass-1 seeds, causal graph, boundaries | value-share propagation, temporal/hop damping, separate channels, trace paths | per-level exposure, traced contributor path | high-degree/service nodes absorb/stop spread |
+| 11 console | versioned graph, evidence, scores | local API, graph/time filters, uncertainty explanation, report builder | offline HTML UI + signed/hashes manifest exports | missing evidence -> visible warning, no invented chart |
+| 12 evaluation | synthetic truth, holdouts, legitimate controls | per-tier/per-group metrics, leakage tests, ablations, offline audit | experiment matrix, model cards, limitations | unsupported claim -> not published |
+
+## 24. Dataset acquisition architecture, sources and reproducibility
+
+### 24.1 Three independent data tracks
+
+| Track | Candidate source | Contains | Does NOT establish | Initial purpose |
+|---|---|---|---|---|
+| A1: benchmark | [Elliptic++ (author-released repository)](https://github.com/juicy-candy/Elliptic) | transaction/actor graph, features, partial labels, temporal windows | TXID-linked IP relays, verified entities/owners, complete SIH schema | classic ML, temporal graph ML and candidate clustering research |
+| A2: benchmark | [BitcoinHeist (UCI)](https://archive.ics.uci.edu/dataset/526/bitcoinheistransomwareaddressdataset) | temporal address behaviors, ransomware-label classes | trustworthy all-benign negatives; raw relay IP traffic | separate address-level anomaly/behavior evaluation |
+| A3: chain reconstruction | [Bitcoin Core blockchain RPC](https://bitcoincore.org/en/doc/25.0.0/rpc/blockchain/getblock/) | locally fetched block/transaction/prevout data as supported by node version/storage | historical P2P source IP, victim attribution | real UTXO graph, fee/weight, raw transaction motifs |
+| B: controlled synthetic | CLARION deterministic generator | chain/wire observations, role/entity truth, capture uncertainty, motif truth | any real-life behavioral performance | full SIH-style integration and Δ/Π/MLRP correctness |
+| C: SIH | organizer-supplied metadata **when available** | inspect actual CSV/JSON/XML schema and source/time semantics | labels and cross-layer authenticity until audited | final requirement-matching demonstration |
+| optional enrichment | [GeoLite2](https://dev.maxmind.com/geoip/geolite2-free-geolocation-data/) | offline country/ASN approximation | wallet owner, physical address or reliable host residential status | contextual wire feature only |
+
+**Source-specific facts:** Elliptic++ publishes separate transaction and address-actor graph research datasets. UCI explicitly cautions that BitcoinHeist non-ransomware/white addresses are not guaranteed non-ransomware. Bitcoin Core can expose raw transaction and prevout detail locally but does not reconstruct historical first-broadcast IPs. GeoLite2 requires account/license compliance; **do not distribute the database in this repository or assume archived local copies are permitted indefinitely**. An original public BlockSci project is no longer actively supported: do not select it as the sole critical dependency.
+
+### 24.2 Dataset adapter pipeline
+
+**Raw evidence bucket (read-only) → source adapter → canonical typed tables → label segregation → data-quality audit → snapshot manifest.**
+
+Every adapter implements six interfaces:
+- identify input schema/version and legal use;
+- parse into normalized typed tables with row-level provenance;
+- measure missingness and label/capture coverage;
+- declare graph node/edge types that are **actually observed**;
+- declare unsupported features and prevent them from being generated;
+- provide quality diagnostics and an independent dataset fingerprint.
+
+Adapters must not force Elliptic++ precomputed features into fabricated full transaction inputs/outputs. An Elliptic++ graph remains a real **transaction/actor benchmark view**, not a fictitious full Bitcoin Core reconstruction.
+
+### 24.3 Acquisition workflow (development-time only)
+
+1. Register dataset version, URL/publisher, consent/licensing/redistribution notes, dataset ID and hashes.
+2. Download externally **before** the offline run (or import files from an authorized storage device); never auto-download during inference.
+3. Preserve immutable raw input bytes and a manifest; do not commit private captures or copyrighted bulk data.
+4. Convert to canonical Parquet, keeping raw source columns and null semantics; block unknown schema versions until reviewed.
+5. Save split boundaries and masks (unknown labels are **unknown**, never automatically licit).
+6. For real benchmark evaluation, track dataset origin, label uncertainty and population distribution.
+7. For SIH input, validate every declared field separately and report absence of outpoints, TXID observations, timestamps, GeoIP, fees or trusted labels.
+
+### 24.4 Dataset priority and target milestones
+
+- **Immediately:** small deterministic SIH-format chain+wire generator with complete truth ledger, benign exchange/custody/CoinJoin hard negatives and measurement corruption.
+- **First independent ML experiment:** Elliptic++ early-time-step training and later-time-step testing, transaction-level metrics; separately evaluate address actor tasks when labels permit.
+- **Parallel graph fidelity experiment:** local Bitcoin Core-derived finite block-range sample (not full chain required for first milestone), exact UTXO flow and transaction motifs.
+- **Cross-layer evaluation:** controlled synthetic plus authentic source-tagged SIH observations if supplied; **no fabricated authentic IP-to-address links**.
+
+## 25. Precise schema architecture and integrity model
+
+### 25.1 Canonical contracts (v1 planned)
+
+| Dataset/table | Key columns | Semantic guarantees |
+|---|---|---|
+| evidence_sources | source_id, dataset_id, file_sha256, source_uri?, capture_scope, license, imported_at, trusted_clock_budget_ms | origin of every fact is recoverable |
+| bitcoin_blocks | block_hash, height, header_time, median_time_past?, seen_at?, chain_state | block time is not relay time |
+| transactions | txid, block_hash?, block_height?, block_time?, first_seen_time?, fee_sats?, vsize?, weight?, status, source_id | txid is a 32-byte hash (hex when serialized) in production |
+| inputs | txid, vin, prev_txid?, prev_vout?, sequence?, address?, value_sats?, script_type?, source_id | previous outpoint is authoritative when known; cannot assume address input ownership |
+| outputs | txid, vout, value_sats, address?, script_pubkey?, script_type?, source_id | output index preserved; zero/missing treated distinctly |
+| network_observations | observation_id, sensor_id, observed_at, time_precision_ms, src_ip, src_port, dst_ip, dst_port, protocol, txid_seen?, relay_event_type?, source_id | timestamped relay is observation, not origin/owner |
+| sessions | session_id, sensor_id, src/dst tuple, start/end, packet_or_message_count?, source_id | session evidence may be coarse, sensors may be partial |
+| ip_enrichment | ip_or_prefix, asn?, country?, host_category?, database_version, updated_at, lookup_status | host type from evidence, not geolocation inference |
+| graph_nodes | node_id, node_type, valid_from, valid_to?, feature_schema, snapshot_id | type is one of six canonical types |
+| graph_edges | edge_id, source_node, target_node, relation, observed_at?, valid_from/to?, amount_sats?, association_confidence?, evidence_id, layer | **association is not attribution** |
+| entity_hypotheses | entity_version_id, member_addresses, t_start/t_end, version_parent_ids, confidence, conflicted_evidence_ids, decision_state | clusters evolve; stable display IDs do not imply stable true owners |
+| pattern_instances | pattern_id, kind, subject_id, time_start/end, evidence_edge_ids, confidence, benign_explanations | pattern is a candidate, not accusation |
+| model_labels | subject_id, subject_type, label, provenance, annotator_or_generator, available_at, split_permission | future annotations excluded from past feature windows |
+| economic_objectives | objective_id, controlled_set?, intended_payees?, constraints?, baseline_source, confidence | absence causes Π abstention |
+| scores_and_leads | subject_id, cutoff_time, run_id, mode, base_model_scores, stack_score?, delta?, pi?, propagation?, priority?, abstentions | source/uncertainty clear, no invented probability |
+| case_audit | case_id, evidence_manifest_hash, reviewed_at, action, analyst_role, note, report_hash | chain of custody and review log |
+
+**Primary Bitcoin invariants:**
+- Amounts use integer satoshis, parsed from exact decimal strings, not binary floating-point arithmetic.
+- Valid TXIDs and scripts are parsed as their real byte/hex forms; deterministic synthetic IDs live in a separate test mode.
+- Exact spent outpoint = (previous TXID, previous output index). This forms the strong Bitcoin value-flow relationship, independent of address reuse.
+- Consensus-related details (coinbase inputs, unknown prevouts, OP_RETURN/unspendable outputs, multisig/Taproot, fees, chain reorganization, unconfirmed/mempool records) each have documented handling.
+- For fully resolved standard transactions with known inputs, conservation requires sum(inputs) = sum(outputs) + fees; do not assume missing inputs are zero.
+- Joining the same TXID across sensors produces multiple *observations*, never multiple independent owners.
+- Event time, block header time, sensor receive time and ingestion time remain separate columns. Declare time-zone/precision/clock skew.
+
+### 25.2 Join tiers
+
+- **Tier J0 — chain evidence:** validated UTXO outpoint-to-spend or transaction address/value edge.
+- **Tier J1 — direct observation:** exact observed TXID within a timestamped network capture; host observed relay of the transaction (not controlled the wallet).
+- **Tier J2 — context:** co-session, ASN/country/prefix, graph-embedding similarity, diurnal rhythm. Can modify a candidate confidence but **must never create an ownership edge**.
+- **Tier J3 — experimental/withheld:** spatiotemporal or embedding-based host↔wallet link prediction; display **association hypothesis** only if quality/calibration gates and human review permit.
+
+Store join tier, sensor/source, timestamp precision, window cutoff, evidence count, confidence calibration method and counterevidence on each association. Duplicate relays must not be counted as independent positive evidence.
+
+### 25.3 Relational-to-heterograph conversion
+
+~~~text
+Bitcoin transaction input:  Address ->[spends, value, time]-> Transaction
+Bitcoin transaction output: Transaction ->[funds, value, time]-> Address
+Wire observed TXID:        Host ->[observed_relay, sensor, time]-> Transaction
+P2P co-session:             Host ->[co_session, time]-> Host
+GeoIP/ASN lookup:           Host ->[hosted_in, db_version]-> ASN
+GeoIP country lookup:       Host/ASN ->[geo_context, db_version]-> Country
+MCER candidate membership:  Address ->[member_of, version, evidence]-> Entity
+~~~
+
+The canonical **six node types** remain unchanged. Network-session rows are evidence on links, not a seventh long-lived node type. Country is context-only in MLRP. Store graph as typed Parquet tables; materialize local NetworkX views for tests and PyTorch Geometric HeteroData for learning. All snapshots must enforce available_at <= cutoff.
+
+## 26. Temporal entity clustering: full MCER model architecture
+
+**Problem:** one operator may use many addresses over time; different operators may co-use infrastructure or collaborate in CoinJoin. Hard clustering based on a single transaction can easily merge unrelated users.
+
+### 26.1 Temporal views, states and output schema
+
+Divide observations into **configurable trailing windows** (e.g., 1 hour, 1 day, 1 week) and **cumulative history as of cutoff**. These are design options, not thresholds provided by the PDF. Keep transaction/order event precision; do not interpolate earlier data from later evidence.
+
+Entity state at cutoff t = (member addresses, feature summary, evidence IDs, conflict set, confidence/uncertainty, first_seen/last_seen, parent/child version lineage, freeze/review status). Recompute only impacted neighborhoods on new batches but preserve earlier cluster versions for audit.
+
+### 26.2 MCER internals (H1–H5)
+
+1. **H1 Co-spend proposal:** common-input unions only produce *proposed* positive links. Detect coordinated multi-party/CoinJoin-like and custody patterns as merge blockers or uncertainty flags.
+2. **H2 Change proposal:** script compatibility, position/amount, novelty, UTXO continuity, fee and known clustering constraints yield candidate change addresses with confidence, never certainties.
+3. **H3 Representation proposal:** use temporally valid chain/hetero embeddings, structural distance, graph communities and behavior similarity. Scores must be calibrated on labeled/synthetic pairs where possible.
+4. **H4 Wire contradiction evaluation:** inspect potentially inconsistent host behavior while explicitly modeling relay diffusion, multi-region peers, NAT, VPN, clock uncertainty and sparse sensors. The diagram's suggested >2 ASN/country in ~100 ms rule is a *research hypothesis*, **not a definitive impossibility or ownership veto**.
+5. **H5 Fingerprint re-link:** candidate re-link across host rotation from stable behavior only with sufficient independent observations; no blanket inference that co-hosted relays share control.
+
+### 26.3 Signed-evidence resolution engine
+
+~~~mermaid
+flowchart LR
+    CUT["As-of cutoff t snapshot"] --> PROP["H1 + H2 + H3: positive link proposals"]
+    CUT --> NEG["H4 + service/cohort patterns: conflict/caution evidence"]
+    PROP --> PAIR["Evidence ledger: scores, uncertainty, source independence"]
+    NEG --> PAIR
+    PAIR --> OPT["Constraint-aware candidate partition optimizer"]
+    OPT --> STAB{"Stable and no unsafe merges?"}
+    STAB -->|no, bounded iterations| OPT
+    STAB -->|yes or limit| VERSION["Versioned clusters and abstained pairs"]
+    VERSION --> NEXT["New cutoff: incremental re-evaluation and lineage"]
+~~~
+
+**Resolution method:** maintain pairwise positive and negative evidence; start with conservative connected components / union-find proposals; apply hard constraints only when they follow verifiable chain facts, and soft constraints for uncertain wire observations; optimize partitions by weighted consistency/community detection; retain unresolved pairs instead of forcing complete partitioning. Use maximum iteration count, monotonic acceptance rules and independent audit to prevent self-confirming loop artifacts.
+
+**Outputs:** confidence of each address membership, candidate cluster confidence, before/after split or merge justifications, conflicting paths, confidence method/version, and temporal lineage. Do not report a cluster as a verified real-world organization or individual.
+
+**Evaluation:** ARI/NMI, pairwise precision/recall, false-merge/split on known synthetic truth, cluster consistency over time, service/CoinJoin safeguards and reproducibility under sensor dropout.
+
+## 27. Bitcoin behavior intelligence: what exactly to analyze
+
+### 27.1 The three Bitcoin layers relevant to CLARION
+
+1. **Consensus / transaction layer (on-chain):** UTXOs, spends, vout amounts, fee/weight, block time, script type, coinbase, output reuse and ancestry. Best evidence for flow and motif analysis.
+2. **P2P relay observation layer (off-chain):** locally captured transaction announcements, inv/tx relay observations, endpoint/port/session timing, sensor coverage. Useful only if this evidence is actually available and legally collected. A node that relays a TXID need not be the originator.
+3. **Analytical inference layer:** motifs, MCER candidate control, trained anomaly classification, statistical cross-layer residuals, Π cost counterfactuals and explainable leads. Claims stay proportional to layers 1–2 evidence.
+
+**Do not confuse** Bitcoin's blockchain data with P2P traffic metadata: chain download alone does not give original broadcast IPs, ports or per-sensor first-seen timings.
+
+### 27.2 Pattern research matrix
+
+| Pattern family | Observable statistical/graph signature | Minimum evidence | Legitimate confounder to test | Output |
+|---|---|---|---|---|
+| Peel-chain candidate | repeated value-flow path with dominant continuation and small exit | resolved UTXO/value chain + chronological hops | payroll/batch payout and regular wallet change | pattern path + likelihood |
+| Rapid layering | several directed value movements in short valid time window | chronological transaction/UTXO paths | hot-wallet management, custody rebalancing | length, time, amount path |
+| Mixing-like fan-in/out | large many-to-many aggregation/distribution | input/output structure, transaction batches | CoinJoin, custodial consolidation, exchanges | caution-tagged motif |
+| CoinJoin-like | collaborative spends and equal-output structures | detailed tx input/output amounts | privacy use is legitimate; block MCER co-spend merge | pattern classification, not illicit claim |
+| Circular flow | value returns through time-ordered valid path | reliable spent outpoints | treasury/internal routing | typed cycle summary |
+| High-frequency bursts | time-dependent event intensity jump vs learned baseline | meaningful first-seen/block temporal series | high-volume merchant/exchange | deviation confidence |
+| Address reuse or churn | repeated/spread output-address observations | address and time history | ordinary HD wallet behavior, deposit accounts | descriptive feature only |
+| Fee/weight anomaly | residual cost vs local fee and weight baseline | fee_sats, vsize, fee environment | urgent transfers, privacy choices | normalized fee residual |
+| Service interaction | graph path to locally known named entity/service | provenance-checked service reference and direct graph link | common custody or infrastructure | contextual flag with uncertainty |
+| Wire/chain mismatch | reliable paired-view behavioral residual | exact TXID observed joins and enough sensors | relayed TXIDs, VPN, NAT, sensor skew | Δ components or abstain |
+
+**Progression:** implement deterministic motif matching with explicit witness paths; measure against legitimate counterexamples; use subgraph embedding search to learn previously unseen candidates; compare rules-only vs embeddings-only vs fused detection. Call a motif a **candidate suspicious pattern**, not demonstrated laundering.
+
+## 28. Stacking, graph ML and model evolution architecture
+
+### 28.1 Multi-view features and embeddings
+
+~~~text
+Snapshot as-of time T
+  chain view  -> engineered stats, outpoint flow, motifs -> chain encoder
+  wire view   -> observed relay/session features        -> wire encoder [if gated]
+  combined graph -> typed edges/time-aware neighborhood -> hetero encoder
+  common feature store -> {z_chain, z_wire?, z_graph, context, reliability masks}
+  prediction level -> transaction/address/entity/subgraph
+~~~
+
+Representations are trained within each cutoff/fold. Shared space can be produced by a relational GraphSAGE/GAT backbone with learned type projections; wire and chain view heads remain separately identifiable for Δ. A heterogeneous temporal encoder is an **upgrade** after Node2Vec, static GraphSAGE and GAT baselines, not required to show a fake advanced result.
+
+### 28.2 Exact supervised training graph
+
+~~~mermaid
+flowchart TB
+    D["Eligible labels + as-of feature snapshots"] --> SPLIT["Chronological train / validation / untouched test"]
+    SPLIT --> F1["Fold 1: fit preprocessing + base learners on past"]
+    SPLIT --> F2["Fold 2: fit preprocessing + base learners on past"]
+    SPLIT --> FK["Later rolling folds: train past, predict next"]
+    F1 --> OOF["Out-of-fold base predictions + eligible Δ/Π/motif features"]
+    F2 --> OOF
+    FK --> OOF
+    OOF --> META["Meta-learner (regularized LR; optional LightGBM)"]
+    META --> CAL["Independent later calibration / conformal diagnostics"]
+    CAL --> HOLD["One untouched future-period holdout"]
+    HOLD --> REG["Review model card, promote or reject version"]
+~~~
+
+**Base models:** logistic regression and random forest for interpretable baselines; optional LightGBM for tabular nonlinearities; isolation forest, One-Class SVM and Gaussian mixtures as novelty detectors; GraphSAGE/GAT/temporal heads for learned graph patterns. Avoid feature proliferation without measured holdout benefit.
+
+**Leakage controls:** out-of-fold predictions must exclude the target record and any unavailable future graph neighbors, features, labels and cluster assignments. Train-fold graph embeddings, MCER state and calibrators separately; do not random-split closely related graph neighborhoods and assume independence. Record fold IDs, cutoff times, holdout windows, class weights and seed values. Do not let propagated pass-1 outputs re-enter pass-1 base or meta training.
+
+**No-label mode:** choose validated unsupervised detectors, normalize rankings using training-period distributions and aggregate only compatible novelty signals. Do not call output a calibrated probability of crime.
+
+### 28.3 Two-pass fusion model order (essential)
+
+- **Pass 1:** base+stack, Δ (when valid), Π components (when valid), motif evidence. Output an audited local score; freeze/hashes seeds.
+- **MLRP:** forward/backward risk computed from frozen seeds and evidence graph; no circular self-feedback.
+- **Pass 2:** combine local risk and a **capped** propagation prior (maximum 25 points out of 100), optionally fitted using *past-fold propagated features*, never in-sample label-correlated propagation.
+- **Explain:** show each term separately, original units, thresholds, calibration availability, abstentions, seed path and service boundary.
+
+### 28.4 Model evolution (training lifecycle)
+
+~~~text
+Dataset registry + immutable schema
+    -> validation/label eligibility
+    -> time-windowed data and graph feature store
+    -> baseline training
+    -> OOF stacking and calibration
+    -> independent temporal evaluation
+    -> legitimate-service / subgroup FP audit
+    -> model card and versioned registry
+    -> offline inference package
+    -> local drift monitoring and queued retraining
+    -> champion/challenger comparison
+    -> manual promotion after acceptance checks
+~~~
+
+**Drift signals:** new feature/missingness distributions, changed transaction amount and fee regimes, graph-degree and motif distributions, wire-join rate, source-sensor drift, label prevalence/definition changes and calibration deterioration. Use PSI/KS or appropriate shift tests carefully with sample sizes and multiple-testing control. If labels are unavailable, drift **does not prove** accuracy loss; do not auto-promote based on synthetic fit.
+
+**Promotion gate:** documented gain on untouched later holdout **and** acceptable FPR on exchange, CoinJoin, hosted service, mobile/VPN cohorts, plus offline and reproducibility tests. Keep champion and prior model for rollback, hash all weights, avoid automatic downloading of models in deployed Linux runtime.
+
+## 29. Cross-layer intelligence: Δ and Π implementation decision map
+
+### 29.1 Δ architecture
+
+Input requirements: (a) as-of chain representations; (b) wire representations; (c) reliable observed-TXID event links; (d) adequate independent sensor/session support.
+
+**Pipeline:** pair eligible snapshots -> remove unsupported links -> train-only scale -> CCA baseline -> held-out residual calibration -> interpret Δ1–Δ5 as separately testable scenario detectors. Upgrade to contrastive paired-view encoders only when they improve held-out robustness and retain traceability.
+
+**False-association defense:** shared hosts/prefixes may be relays, corporate NAT, hosted services or exchanges. Unreliable geolocation is not enough for a "route impossible" assertion. If any premise is missing: output **Δ: ABSTAIN** plus the missing evidence and sensitivity results. High residual means a cross-view difference needing investigation, not deliberate deception.
+
+### 29.2 Π architecture
+
+Input requirements: demonstrable controlled input set, externally directed economic outcome, allowable settlement constraints, minimum-cost comparator, local fee/weight context and optional infrastructure observations.
+
+**Pipeline:** reconstruct actual transaction plan -> define feasible comparison plans meeting the *same* economic goal -> calculate minimum cost per permitted dimension -> itemize signed actual-minus-baseline premiums -> sensitivity interval -> audit controlled-set assumptions. Calculate only identifiable components.
+
+- Π_fee: satoshi premium relative to a justified fee/virtual-size environment.
+- Π_hop: excess economically unnecessary hops.
+- Π_time: extra settlement latency under stated constraints.
+- Π_frag: output/address fragmentation beyond verified payees.
+- Π_infra: directly evidenced network/infrastructure premium, with overlap audit against Δ2.
+
+Never collapse monetary, time and counts into unweighted raw additions. A high Π can be perfectly legitimate privacy expenditure. If destination/controlled-set assumptions are not supported, **Π: ABSTAIN** and do not silently treat the premium as zero.
+
+## 30. Security, privacy, evidence integrity and offline threat model
+
+### 30.1 Assets and threat boundaries
+
+**Assets:** raw evidence, personal/network metadata, sensor provenance, private labels, model weights, training inputs, cluster hypotheses, risk outputs, investigator annotations and exported cases.
+
+**Threats:** hostile dataset files, tampered captures or labels, adversarial poisoning, malicious deserialization, resource exhaustion, unauthorized dashboard access, browser injection, CSV/Excel formula injection, prototype model overconfidence, supply-chain compromise and accidental public release of sensitive observations.
+
+### 30.2 Security controls and ownership
+
+| Boundary | Mandatory controls | Validation |
+|---|---|---|
+| File upload/ingestion | allowlist extensions and schema; file/row/array ceilings; streaming; temp isolation; no shell processing of user paths | malformed/bomb/oversize fixture tests |
+| XML/JSON/CSV parsing | disable XML entity expansion/external references and DTD; depth/size limits; escape spreadsheet formula payloads; reject duplicate JSON keys when security-relevant | XXE, oversized nested structures and CSV injection regression |
+| Source verification | SHA-256 input/manifest; independently signed capture metadata where possible; immutable raw snapshots, chain-of-custody logs | modification detection and provenance replay |
+| Graph construction | relation allowlist, valid time/type direction, explicit J0–J3 evidence tier, confidence source | illegal cross-layer ownership edges prohibited |
+| Model training | labels/data lineage, contamination/poisoning probes, fold isolation, audited weight ingestion | leakage/poisoning and split tests |
+| Model serialization | prefer safe tensor and structured formats; avoid loading untrusted pickle/joblib artifacts | malicious model fixture rejected |
+| Offline runtime | block egress in test network; pre-package all wheels, GeoIP where licensed and approved weights; no CDN/fonts/telemetry | air-gapped install and no-network UI test |
+| API/dashboard | localhost binding by default, authenticated investigator roles when remote, CSRF/CORS restrictions, input escaping, strict CSP, session expiration, rate limits | browser injection, permissions and route checks |
+| Evidence export | sanitize text, redact sensitive IP/identity data by role, escape spreadsheets, case hash manifest, prevent template injection | export opening and tamper check |
+| Dependency and access | pinned builds, dependency SBOM/license audit, least-privilege filesystem, encrypted backups if sensitive | offline build and review checklist |
+
+**Privacy rule:** a network IP is potentially personal information. Minimize display, retention and export; show IP/ASN/country only where permission and evidence need justify it. Do not use geo-IP to locate an individual or household. Third-party dataset/GeoLite terms override optional convenience features.
+
+**Security design choice:** default installation is a **single-machine analyst workstation**. Multi-user or exposed-host deployment remains unsupported until authentication, audit logs, deployment hardening and permission controls are fully verified.
+
+## 31. Concrete technology allocation per architectural stage
+
+| Layer | Primary stack | Why / fallback |
+|---|---|---|
+| Ingestion and typed schemas | Python 3.11/3.12; Pydantic; PyArrow; strict standard-library CSV/JSON/XML parsers | consistent explicit contracts; streaming + bounded memory |
+| Offline storage | Parquet + DuckDB; immutable run manifests | columnar bulk data, SQL audit and reproducibility |
+| Transaction decode | Bitcoin Core offline export/parser; versioned script/UTXO decoder | authentic outpoint/script/weight semantics |
+| Network parsing | Python IP tools + locally imported observation/session tables; optional dpkt/scapy for **authorized preexisting captures** | avoid reliance on a live monitoring service; SIH CSV/JSON/XML is primary |
+| Cross-layer joins and audit | DuckDB keyed tables, SciPy/scikit-learn statistical tests | exact joins, chronological cutoffs, permutation checks |
+| Graph snapshots and motifs | Typed Parquet graph, NetworkX for fixtures, optional optimized graph backend at scale | deterministic edge evidence, interchangeable backend |
+| Graph ML | PyTorch / PyTorch Geometric HeteroData + temporal neighbor sampling | trained homogeneous-to-heterogeneous upgrade, CPU fallback |
+| MCER | constraint graph, conservative union-find proposals, signed link scores, Leiden where justified | false-merge prevention and versioned lineage |
+| Classic/unsupervised ML | scikit-learn and optional LightGBM | strong reproducible tabular baseline |
+| Tracking | local model artifacts + MLflow optional **only with local filesystem backend**, or lightweight JSON registry | fully offline reproducibility |
+| Calibration/interpretability | scikit-learn calibration, carefully fitted conformal methods, SHAP when supported | score/probability distinction |
+| MLRP | custom deterministic causal graph walk, tested against conservation invariants | auditable propagation over fancy opaque diffusion |
+| Local service | FastAPI + Uvicorn + DuckDB read-only result queries | local API and export jobs |
+| UI | React + TypeScript + Cytoscape.js + offline asset bundling | investigative graph explorer without CDN |
+| Dossier | local PDF engine, sanitized CSV/JSON export, SHA-256 manifests | reproducible case package |
+| CI and packaging | pytest, Ruff, mypy, pip lock/constraints, Linux wheel cache | install and run with disabled network |
+
+Library compatibility must be validated for the selected Python/PyTorch/CUDA versions and pinned. Avoid designing around old, unmaintained BlockSci: its original maintainers state that development/support ended in 2020.
+
+## 32. Performance and scaling requirements (proposed targets, not benchmarks)
+
+- **Milestone 1 small fixture:** 100–1,000 transactions and source-tagged wire events; execute deterministically on CPU laptop; full provenance and a simple graph viewer.
+- **Milestone 2 training benchmark:** partition 100k–1M transactions into snapshots without forcing the full dense graph into a single data frame. Benchmark DuckDB/Parquet memory and join performance, separately from GPU model training.
+- **Milestone 3 advanced GNN:** train on sampled temporal neighborhoods, bounded fans and batches; compare CPU vs available CUDA resources, log maximum memory usage and batch latency.
+- **Milestone 4 investigator UI:** paginate leads and fetch top-k local subgraphs rather than rendering hundreds of thousands of graph nodes at once; preserve complete graph in storage.
+- **Milestone 5 offline package:** all Python wheels, model checkpoints, UI assets, database schemas and optional licensed GeoIP are present before the network is disabled; no runtime dependencies on SaaS.
+
+**Performance acceptance is measured** (not asserted): track rows/sec, peak RAM, graph build rate, model inference p50/p95, disk size per million transactions, time-window rebuild cost, dashboard response latency, and export duration for each reference dataset.
+
+## 33. Architecture decision and acceptance register
+
+### 33.1 Decisions required before model-building
+
+| Decision | Owner/acceptance evidence | Default proposal |
+|---|---|---|
+| Data licensing and allowed redistribution | dataset manifest with verified source terms | download separately; no data committed |
+| SIH import schema | sample input plus parser unit tests | normalized chain/wire separate tables |
+| Timestamp precision | sensor and dataset reports | preserve origin and uncertainty fields |
+| True TXID association | J1 direct observed-TXID test | no identity inference |
+| Cross-layer gate | coverage, permutation dependence, sensor-bias report | chain-only when uncertain |
+| Canonical subject for ML | data-specific labeled levels | transaction primary, address/entity ancillary |
+| Temporal fold boundaries | dataset date/time semantics + overlap audit | expanding folds with validation gap |
+| MCER confidence method | synthetic pairwise calibration + FMR test | conservative partition/abstain |
+| Δ baseline and confidence | held-out chain/wire residual audit | CCA first, hetero model later |
+| Π minimum cost | economic-goal audit and local fee context | abstain unless demonstrable |
+| Risk propagation | path/value conservation tests | deterministic frozen-seed, six-hop cap |
+| Final score calibration | labeled independent holdout | ranking-only if not justified |
+| Case security model | workstation identity/access review | loopback-only for prototype |
+
+### 33.2 Architecture-to-deliverable milestones
+
+- **Milestone A:** canonical schema, provenance, synthetic generator and exact join/abstain test.
+- **Milestone B:** real Bitcoin graph + simple time-window features + baseline training.
+- **Milestone C:** learned graph representations, MCER and motif audits.
+- **Milestone D:** leak-safe OOF stacking + Δ/Π validity gates and calibrated local fusion.
+- **Milestone E:** value-conserving MLRP, local investigator console and evidence dossier.
+- **Milestone F:** independent benchmark controls, temporal ablations, air-gapped reproducibility and documented limits.
+
+Each milestone has a tracked phase mapping in section 19. **No boxes are marked complete by this architecture update.**
+
+### 33.3 Sources used to expand the architecture
+
+These sources support the **data availability, API, licensing and framework choices** only; they do not establish results for CLARION.
+
+- Bitcoin Core blockchain RPC docs: https://bitcoincore.org/en/doc/25.0.0/rpc/blockchain/getblock/
+- Bitcoin Core transaction RPC docs: https://developer.bitcoin.org/reference/rpc/getrawtransaction.html
+- Elliptic++ public researcher repository: https://github.com/juicy-candy/Elliptic
+- BitcoinHeist UCI dataset and caution about unverified negatives: https://archive.ics.uci.edu/dataset/526/bitcoinheistransomwareaddressdataset
+- MaxMind GeoLite2 developer docs and current end-user agreement: https://dev.maxmind.com/geoip/geolite2-free-geolocation-data/ and https://www.maxmind.com/en/geolite/eula
+- PyG heterogeneous data + neighbor sampling: https://pytorch-geometric.readthedocs.io/en/latest/tutorial/neighbor_loader.html
+- Original BlockSci project's support/deprecation notice: https://github.com/citp/BlockSci
+
+**Current project state:** Architecture plan and detailed technical blueprint updated. **All implementation and verification checkboxes remain open; this commit changes only README.md.** Proceed to phase P1.1 only after architecture review.
