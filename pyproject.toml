@@ -42,3 +42,34 @@ packages = ["src/clarion"]
 
 [tool.hatch.build.targets.sdist]
 include = ["/src", "/tests", "/README.md"]
+
+# --- Code quality: ruff = lint + format, mypy = type checks, pytest = tests ---
+
+[tool.ruff]
+line-length = 100
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W",  # pycodestyle: basic style errors
+    "F",       # pyflakes: unused imports, undefined names
+    "I",       # import sorting
+    "B",       # bugbear: likely bugs
+    "UP",      # pyupgrade: modern syntax for Python 3.11+
+    "SIM",     # simplifications
+    "S",       # bandit: security (unsafe YAML/XML/pickle, shell calls)
+]
+ignore = ["E501"]  # line length is the formatter's job
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]  # pytest uses plain assert
+
+[tool.mypy]
+python_version = "3.11"  # check against the oldest supported Python
+strict = true
+files = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "--strict-config", "--import-mode=importlib"]
+xfail_strict = true
